@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#FFC107">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>MARSON Abarrotes · Pedidos</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+:root{
+  --bg: #F8F9FA;
+  --card: #FFFFFF;
+  --tx: #1A1A1A;
+  --mu: #8E8E93;
+  --ac: #FFC107;
+  --ac-tx: #1A1A1A;
+  --bd: #EAEAEA;
+  --radius: 16px;
+  --shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+body{margin:0;background:var(--bg);color:var(--tx);max-width:480px;margin:auto;padding-bottom:120px;}
+
+/* Header */
+header{display:flex;align-items:center;gap:12px;padding:16px 20px;background:var(--card);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:10;}
+header .sb{flex:1;display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:12px;padding:10px 14px;}
+header .sb input{flex:1;border:0;background:transparent;outline:0;font-size:15px;}
+.bell{position:relative;border:0;background:none;font-size:22px;cursor:pointer;}
+
+/* Contenedores */
+.sec{padding:20px;}
+.box{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:16px;box-shadow:var(--shadow);}
+
+/* Banner */
+.ban{display:flex;justify-content:space-between;align-items:center;gap:8px;border-radius:var(--radius);padding:20px;margin-bottom:20px;color:#1A1A1A;background:var(--ac);box-shadow:var(--shadow);}
+.ban b{font-size:20px;font-weight:800;line-height:1.2;}
+.ban p{margin:6px 0 12px;font-size:13px;opacity:.8;}
+.ban .bi{font-size:64px;}
+
+/* Botones */
+.go{width:100%;padding:16px;border:0;border-radius:50px;background:var(--ac);color:var(--ac-tx);font-weight:700;font-size:16px;cursor:pointer;text-align:center;display:block;transition:transform 0.1s;}
+.go:active{transform:scale(0.98);}
+.yb{border:0;border-radius:50px;background:#1A1A1A;color:#FFF;font-weight:700;padding:10px 20px;cursor:pointer;font-size:14px;}
+.sm{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:20px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600;}
+
+/* Categorías y Productos */
+.tg,.g{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.tile{border-radius:var(--radius);padding:16px;min-height:120px;position:relative;overflow:hidden;cursor:pointer;color:#FFF;background:var(--card);box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:space-between;}
+.tile b{font-size:15px;line-height:1.2;}
+.tile small{display:block;margin-top:4px;font-size:11px;opacity:0.9;}
+.tile em{font-style:normal;font-weight:700;font-size:12px;color:var(--ac);margin-top:8px;}
+.tile .tp{position:absolute;right:10px;bottom:10px;font-size:40px;line-height:1;}
+
+.p{background:var(--card);border-radius:var(--radius);padding:12px;text-align:center;box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:space-between;}
+.p b{display:block;font-size:14px;margin:6px 0 2px;font-weight:700;}
+.p small{color:var(--mu);font-size:12px;}
+.ic{width:80px;height:80px;margin:0 auto 8px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:44px;overflow:hidden;background:var(--bg);}
+.ic img{width:100%;height:100%;object-fit:cover;}
+
+/* Botones + y - */
+.q{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-radius:50px;padding:4px;margin-top:12px;}
+.q button{width:32px;height:32px;border-radius:50%;border:0;background:var(--card);color:var(--tx);font-size:18px;font-weight:700;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.1);}
+.q span{font-weight:700;font-size:14px;padding:0 10px;}
+
+/* Barra inferior */
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--bd);padding:12px 20px;display:flex;flex-direction:column;gap:12px;z-index:20;}
+.ci{display:flex;justify-content:space-between;align-items:center;font-size:14px;}
+.ci button{width:auto;padding:12px 24px;border-radius:50px;background:var(--ac);color:var(--ac-tx);font-weight:700;border:none;font-size:14px;}
+
+/* Navegación */
+.nav{display:flex;justify-content:space-around;align-items:center;padding:8px 0;}
+.nav button{background:none;border:none;font-size:24px;color:var(--mu);display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;}
+.nav button small{font-size:10px;font-weight:600;color:var(--mu);}
+.nav button.active{color:var(--ac);}
+
+/* Modales */
+.opt{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--bd);border-radius:12px;padding:14px;margin-top:8px;cursor:pointer;font-weight:600;}
+.opt i{width:20px;height:20px;border-radius:50%;border:2px solid var(--bd);}
+.opt.on{border-color:var(--ac);}
+.opt.on i{background:var(--ac);box-shadow:inset 0 0 0 4px var(--card);}
+
+input.t,textarea,select.in{border-radius:12px;border:1px solid var(--bd);padding:14px;font-size:15px;width:100%;outline:none;background:var(--bg);margin-bottom:8px;}
+input.t:focus{border-color:var(--ac);}
+
+/* Welcome */
+.wel{text-align:center;padding:40px 20px;min-height:100vh;display:flex;flex-direction:column;justify-content:center;}
+.wel h1{font-size:28px;font-weight:800;margin-bottom:10px;}
+.wel p{color:var(--mu);font-size:15px;margin-bottom:30px;}
+.w3{display:flex;justify-content:center;gap:24px;margin-bottom:40px;}
+.w3 div{display:flex;flex-direction:column;align-items:center;gap:8px;}
+.w3 span{width:60px;height:60px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:var(--shadow);}
+.w3 small{font-size:12px;color:var(--mu);font-weight:600;}
+
+/* Timeline y Feedback */
+.tl{margin:12px 0;}
+.tl .s{display:flex;gap:12px;padding-bottom:14px;position:relative;}
+.tl .s::before{content:"";position:absolute;left:11px;top:24px;bottom:-2px;width:2px;background:var(--bd);}
+.tl .s:last-child::before{display:none;}
+.tl .d{width:24px;height:24px;border-radius:50%;border:2px solid var(--bd);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:12px;flex:none;z-index:1;}
+.tl .s.ok .d{background:var(--ac);border-color:var(--ac);color:#1A1A1A;}
+.stars{display:flex;gap:4px;margin-bottom:8px;}
+.star{border:0;background:none;font-size:28px;color:var(--bd);cursor:pointer;padding:0;}
+.star.on{color:var(--ac);}
+.hide{display:none}
+#bol{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;overflow:auto;padding:12px;display:none}
+#bol.on{display:block}
+.rec{background:#fff;color:#222;max-width:380px;margin:auto;padding:16px;border-radius:10px;font-size:13px}
+.rec table{width:100%;border-collapse:collapse}
+.rec td,.rec th{padding:4px 2px}
+@media print{body>*:not(#bol){display:none!important}#bol{position:static;background:none;padding:0;display:block}.noprint{display:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <img alt="MARSON" style="height:36px;border-radius:8px" src="logo.webp" onerror="this.style.display='none'">
+  <div class="sb"><span style="opacity:0.5">🔍</span><input id="gs" placeholder="Buscar en MARSON..." oninput="buscarHeader(this.value)"></div>
+  <button class="bell" onclick="view='orders';render()">🔔<i id="dot" style="display:none;position:absolute;top:0;right:0;width:8px;height:8px;background:#e33;border-radius:50%"></i></button>
+</header>
+
+<div class="sec" id="main"></div>
+<div id="bol"></div>
+
+<div class="bar">
+  <div class="ci" id="cartTxt"></div>
+  <nav class="nav">
+    <button onclick="goHome()" class="active" id="navHome">🏠<small>Inicio</small></button>
+    <button onclick="focusSearch()">🔍<small>Buscar</small></button>
+    <button onclick="view='orders';render()">📋<small>Pedidos</small></button>
+    <button onclick="cartGo()">🛒<small>Carrito</small></button>
+  </nav>
+</div>
+
+<script>
+// ========== CONFIGURACIÓN ==========
+const WA = "51966721286";
+const LOGO = "logo.webp";
+const PIN_DEFAULT = "CANSERBERO";
+const FB = {
+  apiKey:"AIzaSyD8fhldytkcW1b4ggh7tQ2coaX8nuEDOts",
+  authDomain:"marson-13738.firebaseapp.com",
+  databaseURL:"https://marson-13738-default-rtdb.firebaseio.com",
+  projectId:"marson-13738",
+  storageBucket:"marson-13738.firebasestorage.app",
+  messagingSenderId:"724074817623",
+  appId:"1:724074817623:web:f76ad6f8c92184eb789b12"
+};
+const ADMINS = ["antonidonaire04@gmail.com"];
+const ENTREGAS = ["Recojo en tienda","Delivery"];
+const CATS = ["Todo","🥬 Verduras","🍚 Arroz y Cereales","🫘 Menestras","🍝 Fideos","🥛 Lácteos","🌭 Embutidos","🧂 Insumos","🥤 Bebidas","🐶 Mascotas","🧻 Papel y limpieza","🍪 Golosinas y snacks","🧴 Higiene personal","🥫 Enlatados","🌿 Condimentos","☕ Desayuno","🥡 Descartables","🍞 Panadería","📦 Otros artículos"];
+const STS = ["Recibido","Preparando","Listo","Completado"];
+
+// ========== PRODUCTOS BASE ==========
+const P_BASE = [
+[1,"Tomate","🍅",4.5,"kg"],[1,"Cebolla roja","🧅",3.5,"kg"],[1,"Pimiento rojo","🫑",6,"kg"],[1,"Pimiento verde","🫑",5,"kg"],[1,"Zanahoria","🥕",2.8,"kg"],[1,"Papa blanca","🥔",3,"kg"],[1,"Ajo","🧄",1,"cabeza"],[1,"Limón","🍋",6,"kg"],
+[2,"Arroz extra","🍚",4.2,"kg"],[2,"Avena en hojuelas","🥣",1.5,"bolsa 200g"],[2,"Quinua","🌾",9,"kg"],[2,"Kiwicha","🌾",8,"kg"],[2,"Maíz cancha","🌽",5,"kg"],
+[3,"Frejol canario","🫘",8,"kg"],[3,"Lentejas","🫘",7,"kg"],[3,"Garbanzo","🫘",9,"kg"],[3,"Pallares","🫘",10,"kg"],[3,"Arveja partida","🫛",6,"kg"],
+[4,"Tallarín","🍝",3.8,"500g"],[4,"Spaghetti","🍝",3.5,"500g"],[4,"Fideo cabello de ángel","🍜",3.2,"500g"],[4,"Fideo tornillo","🍝",3.4,"500g"],
+[5,"Leche evaporada","🥛",4.2,"lata"],[5,"Leche fresca","🥛",5.5,"litro"],[5,"Huevos","🥚",0.6,"unid."],[5,"Queso fresco","🧀",20,"kg"],[5,"Mantequilla","🧈",3.5,"barra"],
+[6,"Salchicha","🌭",1.2,"unid."],[6,"Jamonada","🥓",2,"100g"],[6,"Hot dog paquete","🌭",11,"paq."],
+[7,"Aceite vegetal","🫗",9,"litro"],[7,"Azúcar","🍬",3.8,"kg"],[7,"Sal","🧂",1.5,"kg"],[7,"Harina","🌾",3.5,"kg"],[7,"Ají panca","🌶️",1,"sobre"],[7,"Atún en lata","🐟",5.5,"lata"],
+[8,"Gaseosa 1.5L","🥤",6.5,"botella"],[8,"Agua 625ml","💧",1.5,"botella"],[8,"Jugo en caja","🧃",2.5,"caja"],
+[9,"Comida para perro adulto","🐕",7,"kg"],[9,"Comida para cachorro","🐶",8.5,"kg"],[9,"Costal comida perro 15kg","🦴",95,"costal"],[9,"Lata para perro","🥫",4.5,"lata"],[9,"Hueso para perro","🦴",3,"unid."]
+];
+
+function normalizarBase(){
+  return P_BASE.map((a,i)=>({sku:"p"+(i+1),c:a[0],n:a[1],e:a[2],p:a[3],u:a[4],off:false,ag:false,k:0}));
+}
+
+// ========== ESTADO ==========
+let P = normalizarBase();
+let cart = {}; 
+let orders = []; 
+let V = []; 
+let ST = {}; 
+let MV = []; 
+let CJ = {open:false, ini:0, t0:0, mov:[]};
+let CH = []; 
+let PD = []; 
+let S = {nm:"", pago:"Efectivo", l:[], rec:0};
+let CF = {nm:"", tel:"", ent:ENTREGAS[0], dir:"", nt:"", pago:"Yape / Plin", hora:"Lo antes posible"};
+let JUST = null;
+let view = "shop", cat = 0, q = "", at = "dash", aq = "";
+let admin = false, me = null;
+let DB = null, AU = null, subD = false, catNull = false;
+let saveCatTimer = null;
+
+// ========== HELPERS ==========
+const $ = s => document.querySelector(s);
+const money = n => "S/ " + (+n||0).toFixed(2);
+const esc = s => String(s||"").replace(/"/g,"&quot;");
+const bySku = s => P.find(p=>p.sku===s);
+const count = () => Object.values(cart).reduce((a,b)=>a+b,0);
+const total = () => Object.entries(cart).reduce((a,[sku,n])=>{const p=bySku(sku);return p?a+p.p*n:a},0);
+const H = s => { let h=5381; for(const c of String(s||"")) h=(h*33)^c.charCodeAt(0); return String(h>>>0); };
+const ld = (k,d) => { try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } };
+const sv = () => { try{ localStorage.setItem("mars_ventas",JSON.stringify(V)); }catch(e){} };
+const svS = () => { try{ localStorage.setItem("mars_st",JSON.stringify(ST)); localStorage.setItem("mars_mv",JSON.stringify(MV.slice(0,300))); }catch(e){} };
+const save = () => { try{ localStorage.setItem("bdl_orders",JSON.stringify(orders)); localStorage.setItem("bdl_cart",JSON.stringify(cart)); }catch(e){} };
+const sk = (k,v) => { try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} if(DB&&AU&&PATH[k]) try{ DB.ref(PATH[k]).set(JSON.parse(JSON.stringify(v))); }catch(e){} };
+const PATH = {mars_st:"stock", mars_mv:"mov", mars_cj:"caja", mars_ch:"cierres"};
+
+// ========== NORMALIZAR ITEMS ==========
+function normalizarItem(it){
+  if (it && typeof it === "object" && !Array.isArray(it)){
+    return {sku: it.sku||"", nombre: it.nombre||"", cant:+(it.cant||0), unidad: it.unidad||"", importe:+(it.importe||0), costo:+(it.costo||0)};
+  }
+  if (Array.isArray(it)){
+    if (it.length >= 6) return {sku:it[0], nombre:it[1], cant:+it[2]||0, unidad:it[3], importe:+it[4]||0, costo:+it[5]||0};
+    if (it.length === 5) return {sku:"", nombre:it[0], cant:+it[1]||0, unidad:it[2], importe:+it[3]||0, costo:+it[4]||0};
+    return {sku:"", nombre:it[0], cant:+it[1]||0, unidad:it[2], importe:+it[3]||0, costo:0};
+  }
+  return {sku:"", nombre:"", cant:0, unidad:"", importe:0, costo:0};
+}
+function itemsDe(o){ return (o.items||[]).map(normalizarItem); }
+
+// ========== CARGA INICIAL ==========
+try{ orders = ld("bdl_orders",[]); cart = ld("bdl_cart",{}); V = ld("mars_ventas",[]); ST = ld("mars_st",{}); MV = ld("mars_mv",[]); CJ = Object.assign({open:false,ini:0,t0:0,mov:[]}, ld("mars_cj",{})); CH = ld("mars_ch",[]); }catch(e){}
+
+// Migración carrito y stock viejos (ID -> SKU)
+(function migrar(){
+  const c = {};
+  Object.entries(cart).forEach(([k,v])=>{
+    const p = P.find(x=>x.sku===k) || P.find(x=>String(x.id)===String(k));
+    if (p) c[p.sku] = (c[p.sku]||0) + v;
+  });
+  cart = c;
+  const s = {};
+  Object.entries(ST).forEach(([k,v])=>{
+    const p = P.find(x=>x.sku===k) || P.find(x=>String(x.id)===String(k));
+    if (p) s[p.sku] = v;
+  });
+  ST = s;
+})();
+
+// ========== RENDER ==========
+function render(keep, focus){
+  const g = $("#gs"); if (g && g.value!==q) g.value=q;
+  const m = $("#main"), bar = $(".bar");
+  
+  if (view==="admin"){
+    bar.style.display="none"; m.innerHTML = adminView();
+  } else if (view==="welcome"){
+    bar.style.display="none"; m.innerHTML = welcomeView();
+  } else {
+    bar.style.display="";
+    if (view==="shop") m.innerHTML = shop() + '<p style="text-align:center;margin-top:24px"><button class="sm" onclick="login()">🔐 Panel de la tienda</button></p>';
+    else if (view==="cart") m.innerHTML = cartView();
+    else m.innerHTML = ordersView();
+    
+    const n = count();
+    $("#cartTxt").innerHTML = n ? `Total: <b>${money(total())}</b>` : "Carrito vacío";
+    $("#cartTxt").style.display = (n && view!=="cart") ? "flex" : "none";
+    
+    // Manejo visual de la barra
+    if (view === "cart" || view === "orders") {
+      $(".ci").style.display = "none";
+    } else {
+      $(".ci").style.display = "flex";
+      $(".ci").innerHTML = `<span>${n} productos</span><b>${money(total())}</b><button onclick="cartGo()">Ver carrito</button>`;
+    }
+  }
+  if (focus){ const s = focus===2 ? $("#aqs") : $(".search"); if (s){ s.focus(); s.setSelectionRange(s.value.length, s.value.length); } }
+  if (!keep) window.scrollTo(0,0);
+}
+
+// ========== VISTAS CLIENTE ==========
+function welcomeView(){
+  return `<div class="wel">
+    <img alt="MARSON" src="${LOGO}" style="height:100px;object-fit:contain;margin-bottom:20px" onerror="this.style.display='none'">
+    <h1>Tu bodega<br>de confianza</h1>
+    <p>Haz tu pedido desde el celular y sigue comprando mientras te lo alistamos.</p>
+    <div class="w3">
+      <div><span>🏪</span><small>Recojo rápido</small></div>
+      <div><span>🛵</span><small>Delivery</small></div>
+      <div><span>💜</span><small>Yape y Plin</small></div>
+    </div>
+    <button class="go" onclick="startApp()">Comenzar</button>
+    <button class="sm" style="margin-top:16px;background:transparent;border:none" onclick="startApp();login()">Soy de la tienda</button>
+  </div>`;
+}
+
+function shop(){
+  if (!q && cat===0){
+    return `<div class="ban">
+      <div><b>Calidad y buen precio</b><p>Haz tu pedido y te lo alistamos al toque</p></div>
+      <div class="bi">🛒</div>
+    </div>
+    <div class="tg">${CATS.slice(1).map((_,i)=>i+1).filter(c=>P.some(p=>p.c===c && !p.off)).map(tile).join("")}</div>`;
+  }
+  const L = P.filter(p=>(cat===0||p.c===cat) && !p.off && p.n.toLowerCase().includes(q.toLowerCase()));
+  return `<h2>${cat?CATS[cat]:"Resultados"}</h2>
+    <div class="g">${L.map(card).join("") || '<div class="empty">Sin resultados</div>'}</div>
+    <button class="sm" style="margin-top:20px" onclick="goHome()">← Volver al inicio</button>`;
+}
+
+function tile(c){
+  const L = P.filter(p=>p.c===c && !p.off);
+  const t = CATS[c].replace(/^\S+\s/,"");
+  const bg = `linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.4)), url('img/cat-${c}.webp') center/cover`;
+  return `<div class="tile" style="background:${bg}; color:#FFF;" onclick="cat=${c};q='';render()">
+    <div><b>${t}</b><small>${L.slice(0,3).map(p=>p.n.split(" ")[0]).join(", ")}</small></div>
+    <em style="color:var(--ac)">Explorar ›</em>
+  </div>`;
+}
+
+function card(p){
+  const n = cart[p.sku]||0;
+  return `<div class="p" style="${p.ag?"opacity:.6":""}">
+    ${ico(p)}<b>${p.n}</b>
+    <small>${p.ag?"Agotado":money(p.p)+" / "+p.u}</small>
+    <div class="q">${p.ag
+      ? '<span class="badge" style="background:var(--bd);padding:6px 10px;border-radius:10px;font-size:12px">Agotado</span>'
+      : `<button onclick="add('${p.sku}',-1)">−</button><span>${n}</span><button onclick="add('${p.sku}',1)">+</button>`
+    }</div>
+  </div>`;
+}
+
+const COL = ["","#dff3d6","#fbf0c9","#f1dfc6","#fde4c4","#dcecfb","#fbd9d9","#ece3f7","#d6f0f5","#f3e0cf","#dfe8f0","#fde0ea","#e3d9f5","#ffe3c2","#e6efd0","#ffe9b8","#dde6ec","#f8e4cf","#e8e8e8"];
+function ico(p){ return `<div class="ic" style="background:${COL[p.c]||"#eee"}">${p.img?`<img alt="" src="${p.img}">`:(p.e||`<b style="font-size:20px">${(p.n||"?")[0]}</b>`)}</div>`; }
+
+function cartView(){
+  const items = Object.entries(cart).filter(([sku])=>bySku(sku));
+  return `<h2>🧺 Tu carrito</h2>
+    <div class="box">
+      ${items.map(([sku,n])=>{
+        const p = bySku(sku);
+        return `<div class="ci2" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bd)">
+          ${ico(p)}
+          <div style="flex:1"><b>${p.n}</b><div class="mu">${money(p.p)} / ${p.u}</div></div>
+          <div class="q" style="margin:0;width:100px">
+            <button onclick="add('${sku}',-1)">−</button><span>${n}</span><button onclick="add('${sku}',1)">+</button>
+          </div>
+          <b style="min-width:60px;text-align:right">${money(p.p*n)}</b>
+          <button class="sm" onclick="delItem('${sku}')">✕</button>
+        </div>`;
+      }).join("") || '<div class="empty">Tu carrito está vacío</div>'}
+      <div class="row" style="display:flex;justify-content:space-between;margin-top:16px;font-size:18px"><b>Total</b><b>${money(total())}</b></div>
+    </div>
+    
+    <div class="box"><b>Tus datos</b>
+      <input class="t" id="nm" placeholder="Nombre completo" value="${esc(CF.nm)}" oninput="CF.nm=this.value">
+      <input class="t" id="tel" type="tel" maxlength="9" placeholder="Celular (9 dígitos)" value="${esc(CF.tel)}" oninput="CF.tel=this.value">
+      ${ENTREGAS.length>1 ? `<div style="display:flex;gap:8px;margin-bottom:12px">${ENTREGAS.map(x=>`<button class="sm ${CF.ent===x?"on2":""}" style="flex:1;padding:10px" onclick="CF.ent='${x}';render(true)">${x}</button>`).join("")}</div>` : ""}
+      ${CF.ent==="Delivery" ? `<input class="t" id="dir" placeholder="Dirección exacta" value="${esc(CF.dir)}" oninput="CF.dir=this.value">` : ""}
+    </div>
+    
+    <div class="box"><b>Pago</b>
+      ${[["Yape / Plin","💜"],["Efectivo","💵"]].map(x=>`
+        <div class="opt ${CF.pago===x[0]?"on":""}" onclick="CF.pago='${x[0]}';render(true)"><span>${x[1]} ${x[0]}</span><i></i></div>
+      `).join("")}
+      <button class="go" style="margin-top:20px" onclick="enviar()">Realizar pedido</button>
+    </div>
+    <button class="sm" onclick="view='shop';render()">← Seguir comprando</button>`;
+}
+
+// ========== ACCIONES CARRITO ==========
+function add(sku, d){
+  const p = bySku(sku); if (!p || p.ag) return;
+  const n = (cart[sku]||0) + d;
+  if (n<=0) delete cart[sku]; else cart[sku] = n;
+  save(); render(true);
+}
+function delItem(sku){ delete cart[sku]; save(); render(true); }
+
+// ========== PEDIDOS CLIENTE ==========
+function enviar(){
+  if (!count()) return;
+  const nm = CF.nm.trim(), tel = CF.tel.replace(/\D/g,"");
+  if (nm.length<2) return alert("Escribe tu nombre");
+  if (!/^9\d{8}$/.test(tel)) return alert("Celular inválido (9 dígitos)");
+  if (CF.ent==="Delivery" && CF.dir.trim().length<5) return alert("Escribe tu dirección");
+
+  const items = Object.entries(cart).map(([sku,n])=>{
+    const p = bySku(sku); if (!p) return null;
+    return {sku, nombre:p.n, cant:n, unidad:p.u, importe:+(p.p*n).toFixed(2), costo:0};
+  }).filter(Boolean);
+  if (!items.length) return alert("Tu lista está vacía");
+
+  const o = {
+    id: Date.now(), nm, tel,
+    ent: CF.ent, pago: CF.pago, hora: "Lo antes posible",
+    dir: CF.ent==="Delivery" ? CF.dir.trim() : "",
+    nt: "", st: 0,
+    total: +items.reduce((a,i)=>a+i.importe,0).toFixed(2),
+    items
+  };
+  orders.unshift(o); cart = {}; JUST = o.id;
+  CF.nt = ""; CF.dir = "";
+  save(); view = "orders"; render();
+  
+  if (DB){
+    const r = DB.ref("pedidos").push();
+    o.key = r.key;
+    r.set({...o, t:o.id}).catch(()=>{});
+  }
+  setTimeout(()=>{ JUST = null; }, 20000);
+}
+
+function ordersView(){
+  let h = `<h2>📋 Mis pedidos</h2>`;
+  if (JUST) h += `<div class="box" style="border:2px solid var(--ac)"><b>✅ ¡Pedido enviado!</b><p class="mu">Ya llegó a la tienda. Te avisaremos cuando esté listo.</p></div>`;
+  if (!orders.length) return h+'<div class="empty">Aún no hay pedidos.</div>';
+  return h + orders.map((o,k)=>{
+    const st = Math.min(3, +o.st||0);
+    const items = itemsDe(o);
+    return `<div class="box">
+      <div class="row" style="display:flex;justify-content:space-between;align-items:center"><b>#${String(o.id).slice(-4)}</b><span class="badge">${STS[st]}</span></div>
+      <div class="tl">
+        ${STS.map((s,j)=>`<div class="s ${j<=st?"ok":""}"><div class="d">${j<=st?"✓":""}</div><div><b>${s}</b></div></div>`).join("")}
+      </div>
+      ${items.map(i=>`<div class="row" style="display:flex;justify-content:space-between;font-size:14px;padding:4px 0"><span>${i.nombre} x${i.cant}</span><span>${money(i.importe)}</span></div>`).join("")}
+      <div class="row" style="display:flex;justify-content:space-between;font-size:16px;margin-top:8px"><b>Total</b><b>${money(o.total)}</b></div>
+      
+      ${st===3 ? `<div class="fb" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bd)">
+        <b>¿Cómo estuvo tu pedido?</b>
+        <div class="stars" style="margin-top:8px">${[1,2,3,4,5].map(n=>`<button class="star ${n<=(o.r||0)?"on":""}" onclick="orders[${k}].r=${n};save();render(true)">★</button>`).join("")}</div>
+      </div>` : ""}
+      
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="sm" style="flex:1" onclick="boleta(${o.id})">🧾 Boleta</button>
+        <button class="sm" style="flex:1" onclick="reorder(${k})">🔁 Pedir de nuevo</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function reorder(k){
+  const o = orders[k]; if (!o) return;
+  let n = 0;
+  itemsDe(o).forEach(i=>{
+    const p = (i.sku && bySku(i.sku)) || P.find(x=>x.n===i.nombre);
+    if (p && !p.off && !p.ag){ cart[p.sku] = (cart[p.sku]||0) + i.cant; n++; }
+  });
+  if (!n) return alert("Esos productos ya no están disponibles");
+  save(); view = "cart"; render();
+}
+
+// ========== NAVEGACIÓN ==========
+function goHome(){ cat=0; q=""; $("#gs").value=""; view="shop"; render(); }
+function focusSearch(){ view="shop"; cat=0; render(true); const g=$("#gs"); if(g){ g.focus(); g.setSelectionRange(q.length,q.length); } }
+function cartGo(){ if (!count()) return alert("Tu lista está vacía"); view="cart"; render(); }
+function buscarHeader(v){ q=v; cat=0; view="shop"; render(true); }
+function startApp(){ view="shop"; render(); }
+
+// ========== ADMIN / LOGIN ==========
+function login(){
+  if (!DB){
+    const p = prompt("PIN de la tienda:");
+    if (p===null) return;
+    if (p===PIN_DEFAULT){ admin=true; me={u:"admin",r:"admin"}; view="admin"; at="dash"; render(); }
+    else alert("PIN incorrecto");
+    return;
+  }
+  if (me){ admin=true; view="admin"; at = me.r==="admin" ? "dash" : "ped"; return render(); }
+  $("#bol").innerHTML = `<div class="rec"><b>🔐 Panel de la tienda</b>
+    <input class="in" id="le" type="email" placeholder="Correo" style="margin-top:8px">
+    <input class="in" id="lp" type="password" placeholder="Contraseña" style="margin-top:6px">
+    <div id="lerr" style="color:#d33;font-size:12px"></div>
+    <button class="go" style="margin-top:8px" onclick="doLogin()">Entrar</button>
+    <button class="sm" style="margin-top:6px" onclick="cerrarBol()">Cancelar</button>
+  </div>`;
+  $("#bol").classList.add("on");
+}
+function doLogin(){
+  firebase.auth().signInWithEmailAndPassword($("#le").value.trim(), $("#lp").value)
+    .then(()=>{ cerrarBol(); admin=true; view="admin"; at = (me && me.r==="admin") ? "dash" : "ped"; render(); })
+    .catch(()=>{ $("#lerr").textContent = "Datos incorrectos"; });
+}
+function salirAdmin(){ if (DB && AU) firebase.auth().signOut().catch(()=>{}); admin=false; me=null; view="shop"; render(); }
+function cerrarBol(){ $("#bol").classList.remove("on"); }
+
+// ========== ADMIN VISTAS ==========
+const LD = {};
+function adminView(){
+  if (!me) me = {u:"admin", r:"admin"};
+  if (DB && Object.keys(LD).length < 6) return '<div class="empty">⏳ Cargando datos...</div>';
+  const T = [
+    ["dash","🏠 Inicio"],["ped","📥 Pedidos"],["venta","🧾 Venta"],["inv","📦 Inventario"],["caja","💵 Caja"],["prod","🏷️ Productos"],["rep","📊 Reportes"]
+  ];
+  return `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
+    ${T.map(t=>`<button class="sm ${at===t[0]?"on2":""}" onclick="at='${t[0]}';render()">${t[1]}</button>`).join("")}
+    <button class="sm" onclick="salirAdmin()">⬅ Salir</button>
+  </div>` + ({dash:dashView, ped:pedView, venta:ventaView, inv:invView, caja:cajaView, prod:prodView, rep:repView}[at]||dashView)();
+}
+
+function dashView(){
+  const t = new Date().toDateString();
+  const hoy = V.filter(s=>new Date(s.id).toDateString()===t);
+  return `<div style="display:flex;gap:12px;margin-bottom:16px">
+    <div class="box" style="flex:1"><small>Ventas hoy</small><div style="font-size:24px;font-weight:800;color:var(--ac)">${money(hoy.reduce((a,s)=>a+(+s.total||0),0))}</div></div>
+    <div class="box" style="flex:1"><small>Pedidos</small><div style="font-size:24px;font-weight:800;color:var(--ac)">${hoy.length}</div></div>
+  </div>`;
+}
+
+function pedView(){
+  if (!PD.length) return '<div class="empty">No hay pedidos pendientes.</div>';
+  return PD.slice(0,20).map(o=>{
+    const st = +o.st||0;
+    const items = itemsDe(o);
+    return `<div class="box">
+      <div class="row" style="display:flex;justify-content:space-between;align-items:center"><b>${o.nm}</b><span class="badge">${STS[st]}</span></div>
+      <div class="mu" style="margin-bottom:8px">${o.tel} · ${o.ent}</div>
+      ${items.map(i=>`<div class="row" style="display:flex;justify-content:space-between;font-size:14px"><span>${i.nombre} x${i.cant}</span><span>${money(i.importe)}</span></div>`).join("")}
+      <div class="row" style="display:flex;justify-content:space-between;margin-top:8px"><b>Total</b><b>${money(o.total)}</b></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        ${st<3 ? `<button class="sm" onclick="stPed('${o.key}',${st+1})">Avanzar ▶</button>` : ""}
+        <button class="sm on2" onclick="cobrar('${o.key}')">💵 Cobrar</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+function stPed(k,s){ if(DB) DB.ref("pedidos/"+k+"/st").set(s); }
+
+function ventaView(){
+  const tot = S.l.reduce((a,x)=>{const p=bySku(x.sku);return p?a+p.p*x.q:a},0);
+  return `<div class="box"><b>Venta actual</b>
+    ${S.l.map((x,i)=>{const p=bySku(x.sku);return `<div class="row" style="display:flex;justify-content:space-between;align-items:center;padding:8px 0"><span>${p.e} ${p.n} x ${x.q}</span><b>${money(p.p*x.q)}</b><button class="sm" onclick="S.l.splice(${i},1);render(true)">✕</button></div>`}).join("")||'<div class="empty">Agrega productos</div>'}
+    <div class="row" style="display:flex;justify-content:space-between;font-size:18px;margin-top:12px"><b>TOTAL</b><b>${money(tot)}</b></div>
+    <button class="go" style="margin-top:16px" onclick="reg()">Registrar venta</button>
+  </div>
+  <div class="box"><b>Agregar producto</b>
+    <select class="in" id="sp">${P.map(p=>`<option value="${p.sku}">${p.n}</option>`).join("")}</select>
+    <button class="sm" style="margin-top:8px" onclick="S.l.push({sku:$('#sp').value,q:1});render(true)">Agregar a venta</button>
+  </div>`;
+}
+function reg(){
+  if(!S.l.length) return;
+  const items = S.l.map(x=>{
+    const p = bySku(x.sku);
+    return {sku:p.sku, nombre:p.n, cant:x.q, unidad:p.u, importe:+(p.p*x.q).toFixed(2), costo:0};
+  });
+  const total = items.reduce((a,i)=>a+i.importe,0);
+  const venta = {id:Date.now(), nm:"Cliente", pago:"Efectivo", items, total};
+  V.unshift(venta); sv();
+  
+  // Descontar stock
+  items.forEach(i=>{
+    if(!ST[i.sku]) ST[i.sku] = [0,0];
+    ST[i.sku][0] -= i.cant;
+  });
+  svS();
+  S = {nm:"", pago:"Efectivo", l:[], rec:0};
+  render(true); alert("Venta registrada");
+}
+
+function invView(){
+  return P.filter(p=>!p.off).map(p=>{
+    const s = ST[p.sku] || [0,0];
+    return `<div class="box" style="display:flex;justify-content:space-between;align-items:center">
+      <div>${p.e} <b>${p.n}</b></div>
+      <div><b style="color:${s[0]<=0?"red":"inherit"}">${s[0]} ${p.u}</b></div>
+    </div>`;
+  }).join("");
+}
+
+function cajaView(){ return `<div class="box">Caja: ${CJ.open ? "Abierta" : "Cerrada"}</div>`; }
+function prodView(){ return `<div class="box">Aquí puedes editar productos</div>`; }
+function repView(){ return `<div class="box">Reporte de ventas</div>`; }
+
+function boleta(id){
+  const o = orders.find(x=>x.id===id); if(!o) return;
+  const items = itemsDe(o);
+  $("#bol").innerHTML = `<div class="rec"><h3>MARSON Abarrotes</h3><p>Boleta #${String(id).slice(-4)}</p>
+    ${items.map(i=>`<div>${i.nombre} x${i.cant} = ${money(i.importe)}</div>`).join("")}
+    <h3>Total: ${money(o.total)}</h3>
+    <button class="go" style="margin-top:16px" onclick="cerrarBol()">Cerrar</button>
+  </div>`;
+  $("#bol").classList.add("on");
+}
+
+// ========== FIREBASE ==========
+function initFB(){
+  if (!FB) return;
+  try {
+    firebase.initializeApp(FB); DB = firebase.database();
+    firebase.auth().onAuthStateChanged(u=>{
+      AU = u;
+      if(u){
+        me = {email:u.email, u:u.email.split("@")[0], r:ADMINS.includes(u.email)?"admin":"vendedor"};
+        DB.ref("stock").on("value",s=>{ST = s.val()||{}; if(view==="admin") render(true);});
+        DB.ref("pedidos").on("value",s=>{PD = Object.entries(s.val()||{}).map(([k,o])=>({...o,key:k})); if(view==="admin") render(true);});
+      } else { me=null; }
+      render(true);
+    });
+  } catch(e){ console.error(e); }
+}
+initFB();
+
+// Arranque
+if(!ld("mars_wel",0)) view="welcome";
+render();
+</script>
+</body>
+</html>

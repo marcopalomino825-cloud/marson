@@ -348,7 +348,7 @@ function tabs(){const t=$("#tabs");if(!(view=="shop"&&cat>0)){t.style.display="n
 function goHome(){cat=0;q="";$("#gs").value="";view="shop";render()}
 function focusSearch(){view="shop";cat=0;render(true);$("#gs").focus()}
 function cartGo(){if(!count())return alert("Tu lista está vacía. Agrega productos.");view="cart";render()}
-const LOGO=document.querySelector("header img").src;
+const LOGO="zonia-logo.png";
 const pid=i=>i[5]!=null?+i[5]:(P.find(p=>p.n==i[0])||{}).id;
 function delItem(i){delete cart[i];save();render(true)}
 window.onerror=()=>{const m=$("#main");if(m&&!m.innerHTML.trim())m.innerHTML='<div class="empty">⚠️ Error al cargar. Recarga la página.</div>'};
